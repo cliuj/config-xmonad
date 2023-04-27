@@ -29,6 +29,7 @@ import XMonad.Layout.Spacing
     , Border(Border)
     , Spacing )
 import XMonad.Layout.LayoutModifier (ModifiedLayout)
+import XMonad.Layout.IndependentScreens (onCurrentScreen, withScreens)
 
 -- Data
 import Data.Monoid ()
@@ -64,6 +65,9 @@ myFocusedBorderColor = "#71376A"
 
 myLockScreenCmd :: String
 myLockScreenCmd = "betterlockscreen -l"
+
+myWorkspaces :: [String]
+myWorkspaces = [ "term", "editor", "browser", "comms" ]
 
 -----------------------------------------------------------
 -- Keybindings
@@ -105,11 +109,10 @@ myKeys =
     ]
     ++ workspaceKeys
     where
-        workspaceNumbers = [1 :: Int .. 9] <> [0]
         workspaceKeys =
-            [ ("M-" <> m <> show k, withNthWorkspace f i)
-            | (k, i) <- zip workspaceNumbers [0 ..]
-            , (m, f) <- [("", W.view), ("C-", W.greedyView), ("S-", W.shift)]
+            [ ("M-" <> modifier <> show key, windows $ onCurrentScreen f ws)
+            | (ws, key) <- zip myWorkspaces [1 ..]
+            , (modifier, f) <- [("", W.view), ("C-", W.greedyView), ("S-", W.shift)]
             ]
 
 -----------------------------------------------------------
@@ -147,12 +150,13 @@ myLogHook h = dynamicLogWithPP $ xmobarPP
 main :: IO()
 main = do
     xmonad $ ewmh $ docks def 
-        { terminal = myTerminal,
-          focusFollowsMouse  = myFocusFollowsMouse,
-          modMask = myModMask,
-          borderWidth = myBorderWidth,
-          focusedBorderColor = myFocusedBorderColor,
-          normalBorderColor = myNormalBorderColor,
-          layoutHook = myLayoutHook
-        } `additionalKeysP` myKeys
+        { terminal = myTerminal
+        , focusFollowsMouse  = myFocusFollowsMouse
+        , workspaces = withScreens 2 myWorkspaces
+        , modMask = myModMask
+        , borderWidth = myBorderWidth
+        , focusedBorderColor = myFocusedBorderColor
+        , normalBorderColor = myNormalBorderColor
+        , layoutHook = myLayoutHook
+        }
 
