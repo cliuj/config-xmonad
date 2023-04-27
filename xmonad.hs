@@ -132,19 +132,6 @@ myLayoutHook = avoidStruts $ mySpacing 50 $
                     tall = Tall 1 (3/100) (1/2)
 
 -----------------------------------------------------------
--- LogHook
------------------------------------------------------------
-myLogHook h = dynamicLogWithPP $ xmobarPP
-            { ppCurrent = xmobarColor "#c792ea" "" . wrap "[" "]"
-            , ppHidden = xmobarColor "#82aaff" "" . wrap "*" ""
-            , ppHiddenNoWindows = xmobarColor  "#c792ea" ""
-            , ppSep = "<fc=#666666> <fn=1>|</fn> </fc>"
-            , ppUrgent = xmobarColor "#C45500" "" . wrap "!" "!"
-            , ppOrder = \(ws:l:t:ex) -> [ws, l]
-            , ppOutput = hPutStrLn h
-            }
-
------------------------------------------------------------
 -- Main
 -----------------------------------------------------------
 main :: IO()
