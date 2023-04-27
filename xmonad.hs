@@ -9,13 +9,15 @@ import System.Exit ( exitSuccess )
 -- Actions
 import XMonad.Actions.CopyWindow (kill1)
 import XMonad.Actions.CycleWS
+    ( nextScreen, prevScreen, shiftNextScreen, shiftPrevScreen )
 import XMonad.Actions.DynamicWorkspaces (withNthWorkspace)
 import XMonad.Actions.WithAll (killAll)
 
 -- Hooks
 import XMonad.Hooks.DynamicLog (dynamicLogWithPP, xmobarPP, xmobarColor, wrap, PP(..))
-import XMonad.Hooks.EwmhDesktops
+import XMonad.Hooks.EwmhDesktops ( ewmh )
 import XMonad.Hooks.ManageDocks
+    ( avoidStruts, AvoidStruts, docks, ToggleStruts(ToggleStruts))
 
 -- Utils
 import XMonad.Util.EZConfig (additionalKeysP)
@@ -23,10 +25,13 @@ import XMonad.Util.Run (spawnPipe)
 
 -- Layout
 import XMonad.Layout.Spacing
+    ( spacingRaw
+    , Border(Border)
+    , Spacing )
 import XMonad.Layout.LayoutModifier (ModifiedLayout)
 
 -- Data
-import Data.Monoid
+import Data.Monoid ()
 import qualified Data.Map as M
 
 -----------------------------------------------------------
@@ -51,7 +56,10 @@ myModMask = mod1Mask
 myBorderWidth :: Dimension
 myBorderWidth = 0
 
+myNormalBorderColor :: String
 myNormalBorderColor = "#71376A"
+
+myFocusedBorderColor :: String
 myFocusedBorderColor = "#71376A"
 
 myLockScreenCmd :: String
@@ -111,6 +119,10 @@ myKeys =
 mySpacing :: Integer -> l a -> XMonad.Layout.LayoutModifier.ModifiedLayout Spacing l a
 mySpacing i = spacingRaw False (Border 0 i 0 i) True (Border i 0 i 0) True
 
+myLayoutHook :: ModifiedLayout
+  XMonad.Hooks.ManageDocks.AvoidStruts
+  (ModifiedLayout Spacing (Choose Tall (Choose (Mirror Tall) Full)))
+  Window
 myLayoutHook = avoidStruts $ mySpacing 50 $
              layoutHook def
                 where 
