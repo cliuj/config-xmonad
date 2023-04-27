@@ -4,7 +4,7 @@ import qualified XMonad.StackSet as W
 
 -- System
 import System.IO (hPutStrLn)
-import System.Exit
+import System.Exit ( exitSuccess )
 
 -- Actions
 import XMonad.Actions.CopyWindow (kill1)
@@ -64,7 +64,7 @@ myKeys :: [(String, X ())]
 myKeys =
     [   -- XMonad management
         ("M-C-r", spawn "xmonad --recompile; xmonad --restart"),
-        ("M-S-e", io (exitWith ExitSuccess)),
+        ("M-S-e", io exitSuccess),
         -- Spawn terminal
         ("M-<Return>", spawn myTerminal),
         -- Program launcher
