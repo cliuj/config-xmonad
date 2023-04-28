@@ -41,6 +41,9 @@ import qualified Data.Map as M
 myFocusFollowsMouse :: Bool
 myFocusFollowsMouse = True
 
+myEditor :: String
+myEditor = "emacsclient -a '' -c"
+
 myTerminal :: String
 myTerminal = "alacritty"
 
@@ -78,7 +81,9 @@ myKeys =
         ("M-C-r", spawn "xmonad --recompile; xmonad --restart"),
         ("M-S-e", io exitSuccess),
         -- Spawn terminal
-        ("M-<Return>", spawn myTerminal),
+        ("M-<Return> t", spawn myTerminal),
+        -- Spawn Editor
+        ("M-<Return> e", spawn myEditor),
         -- Program launcher
         ("M-<Space>", spawn myProgramLauncher),
         -- Screen locking
