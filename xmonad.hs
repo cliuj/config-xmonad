@@ -29,7 +29,7 @@ import XMonad.Layout.Spacing
     , Border(Border)
     , Spacing )
 import XMonad.Layout.LayoutModifier (ModifiedLayout)
-import XMonad.Layout.IndependentScreens (onCurrentScreen, withScreens)
+import XMonad.Layout.IndependentScreens (onCurrentScreen, withScreens, workspaces', countScreens)
 
 -- Data
 import Data.Monoid ()
@@ -67,7 +67,7 @@ myLockScreenCmd :: String
 myLockScreenCmd = "betterlockscreen -l"
 
 myWorkspaces :: [String]
-myWorkspaces = [ "term", "editor", "browser", "comms" ]
+myWorkspaces = [ "term", "code", "browser", "comm" ]
 
 -----------------------------------------------------------
 -- Keybindings
@@ -107,13 +107,11 @@ myKeys =
         -- Applications
         ("M-f", spawn myBrowser)
     ]
-    ++ workspaceKeys
-    where
-        workspaceKeys =
-            [ ("M-" <> modifier <> show key, windows $ onCurrentScreen f ws)
-            | (ws, key) <- zip myWorkspaces [1 ..]
-            , (modifier, f) <- [("", W.view), ("C-", W.greedyView), ("S-", W.shift)]
-            ]
+myAdditionalKeys :: XConfig l -> M.Map (KeyMask, KeySym) (X ())
+myAdditionalKeys conf = let modm = modMask conf in M.fromList $
+    [((m .|. modm, k), windows $ onCurrentScreen f i)
+        | (i, k) <- zip (workspaces' conf) [xK_1 .. ]
+        , (f, m) <- [(W.greedyView, 0), (W.shift, shiftMask)]]
 
 -----------------------------------------------------------
 -- Layout 
@@ -123,7 +121,7 @@ mySpacing :: Integer -> l a -> XMonad.Layout.LayoutModifier.ModifiedLayout Spaci
 mySpacing i = spacingRaw False (Border 0 i 0 i) True (Border i 0 i 0) True
 
 myLayoutHook :: ModifiedLayout
-  XMonad.Hooks.ManageDocks.AvoidStruts
+  AvoidStruts
   (ModifiedLayout Spacing (Choose Tall (Choose (Mirror Tall) Full)))
   Window
 myLayoutHook = avoidStruts $ mySpacing 50 $
@@ -136,14 +134,16 @@ myLayoutHook = avoidStruts $ mySpacing 50 $
 -----------------------------------------------------------
 main :: IO()
 main = do
+    screensCount <- countScreens
     xmonad $ ewmh $ docks def 
-        { terminal = myTerminal
-        , focusFollowsMouse  = myFocusFollowsMouse
-        , workspaces = withScreens 2 myWorkspaces
-        , modMask = myModMask
-        , borderWidth = myBorderWidth
-        , focusedBorderColor = myFocusedBorderColor
-        , normalBorderColor = myNormalBorderColor
-        , layoutHook = myLayoutHook
-        }
+        { terminal = myTerminal,
+          focusFollowsMouse  = myFocusFollowsMouse,
+          modMask = myModMask,
+          workspaces = withScreens screensCount myWorkspaces,
+          borderWidth = myBorderWidth,
+          focusedBorderColor = myFocusedBorderColor,
+          normalBorderColor = myNormalBorderColor,
+          keys = myAdditionalKeys,
+          layoutHook = myLayoutHook
+        } `additionalKeysP` myKeys
 
