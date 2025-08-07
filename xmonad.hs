@@ -30,6 +30,10 @@ import XMonad.Layout.Spacing
     , Spacing )
 import XMonad.Layout.LayoutModifier (ModifiedLayout)
 import XMonad.Layout.IndependentScreens (onCurrentScreen, withScreens, workspaces', countScreens)
+import XMonad.Layout.BinarySpacePartition (emptyBSP, Rotate(Rotate), ResizeDirectional(..))
+import qualified XMonad.Layout.BinarySpacePartition as BSP
+import XMonad.Util.Types (Direction2D(L, R, U, D))
+import XMonad.Layout.WindowNavigation (windowNavigation, Navigate(..))
 
 -- Data
 import Data.Monoid ()
@@ -41,11 +45,11 @@ import qualified Data.Map as M
 myFocusFollowsMouse :: Bool
 myFocusFollowsMouse = True
 
-myEditor :: String
-myEditor = "emacsclient -a '' -c"
-
 myTerminal :: String
 myTerminal = "alacritty"
+
+myEditor :: String
+myEditor = myTerminal ++ " -e nvim"
 
 myProgramLauncher :: String
 myProgramLauncher = "rofi -show run"
@@ -78,12 +82,12 @@ myWorkspaces = [ "term", "code", "browser", "comm" ]
 myKeys :: [(String, X ())]
 myKeys =
     [   -- XMonad management
-        ("M-C-r", spawn "xmonad --recompile; xmonad --restart"),
+        ("M-C-r", spawn "xmonad --recompile && xmonad --restart && notify-send 'Xmonad' 'Recompiled and restarted successfully'"),
         ("M-S-e", io exitSuccess),
-        -- Spawn terminal
-        ("M-<Return> t", spawn myTerminal),
         -- Spawn Editor
         ("M-<Return> e", spawn myEditor),
+        -- Spawn terminal
+        ("M-<Return> t", spawn myTerminal),
         -- Program launcher
         ("M-<Space>", spawn myProgramLauncher),
         -- Screen locking
@@ -93,22 +97,38 @@ myKeys =
         ("M-S-q", kill1),
         ("M-C-w", killAll),
         -- Workspace management
-        ("M-,", sendMessage Shrink),
-        ("M-.", sendMessage Expand),
-        ("M-S-,", sendMessage (IncMasterN (-1))),
-        ("M-S-.", sendMessage (IncMasterN 1)),
+        ("M-C-,", sendMessage Shrink),
+        ("M-C-.", sendMessage Expand),
+        ("M-C-S-,", sendMessage (IncMasterN (-1))),
+        ("M-C-S-.", sendMessage (IncMasterN 1)),
         ("M-C-b", sendMessage ToggleStruts),
-        ("M-h", prevScreen),
-        ("M-l", nextScreen),
-        ("M-S-h", sequence_ [shiftPrevScreen, prevScreen]),
-        ("M-S-l", sequence_ [shiftNextScreen, nextScreen]),
-        -- Navigation
-        ("M-j", windows W.focusDown),
-        ("M-S-j", windows W.swapDown),
-        ("M-k", windows W.focusUp),
-        ("M-S-k", windows W.swapUp),
+        -- Screen navigation (DWM-like)
+        ("M-,", prevScreen),
+        ("M-.", nextScreen),
+        ("M-S-,", sequence_ [shiftPrevScreen, prevScreen]),
+        ("M-S-.", sequence_ [shiftNextScreen, nextScreen]),
+        -- Directional window focus (BSPWM-like, confined to current screen)
+        ("M-h", sendMessage $ Go L),
+        ("M-j", sendMessage $ Go D),
+        ("M-k", sendMessage $ Go U),
+        ("M-l", sendMessage $ Go R),
+        -- Directional window swapping
+        ("M-S-h", sendMessage $ Swap L),
+        ("M-S-j", sendMessage $ Swap D),
+        ("M-S-k", sendMessage $ Swap U),
+        ("M-S-l", sendMessage $ Swap R),
+        -- Traditional stack-based navigation (as fallback)
+        ("M-<Tab>", windows W.focusDown),
+        ("M-S-<Tab>", windows W.focusUp),
         ("M-m", windows W.focusMaster),
         ("M-S-m", windows W.swapMaster),
+        -- BinarySpacePartition controls
+        ("M-C-l", sendMessage $ ExpandTowards R),
+        ("M-C-h", sendMessage $ ShrinkFrom R),
+        ("M-C-j", sendMessage $ ExpandTowards D),
+        ("M-C-k", sendMessage $ ShrinkFrom D),
+        ("M-s", sendMessage BSP.Swap),
+        ("M-r", sendMessage Rotate),
         -- Applications
         ("M-f", spawn myBrowser)
     ]
@@ -125,12 +145,8 @@ myAdditionalKeys conf = let modm = modMask conf in M.fromList $
 mySpacing :: Integer -> l a -> XMonad.Layout.LayoutModifier.ModifiedLayout Spacing l a
 mySpacing i = spacingRaw False (Border 0 i 0 i) True (Border i 0 i 0) True
 
-myLayoutHook :: ModifiedLayout
-  AvoidStruts
-  (ModifiedLayout Spacing (Choose Tall (Choose (Mirror Tall) Full)))
-  Window
-myLayoutHook = avoidStruts $ mySpacing 50 $
-             layoutHook def
+myLayoutHook = avoidStruts $ windowNavigation $ mySpacing 40 $
+             emptyBSP ||| tall ||| Mirror tall ||| Full
                 where 
                     tall = Tall 1 (3/100) (1/2)
 
