@@ -91,7 +91,7 @@ myKeys =
         -- Screen locking
         ("M4-l", spawn myLockScreenCmd),
         -- Window management
-        ("M-S-w", kill1),
+        ("M-w", kill1),
         ("M-S-q", kill1),
         ("M-C-w", killAll),
         -- Workspace management
