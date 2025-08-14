@@ -84,10 +84,8 @@ myKeys =
     [   -- XMonad management
         ("M-C-r", spawn "xmonad --recompile && xmonad --restart && notify-send 'Xmonad' 'Recompiled and restarted successfully'"),
         ("M-S-e", io exitSuccess),
-        -- Spawn Editor
-        ("M-<Return> e", spawn myEditor),
         -- Spawn terminal
-        ("M-<Return> t", spawn myTerminal),
+        ("M-<Return>", spawn myTerminal),
         -- Program launcher
         ("M-<Space>", spawn myProgramLauncher),
         -- Screen locking
