@@ -128,7 +128,7 @@ myKeys =
         ("M-s", sendMessage BSP.Swap),
         ("M-r", sendMessage Rotate),
         -- Applications
-        ("M-f", spawn myBrowser)
+        ("M-b", spawn myBrowser)
     ]
 myAdditionalKeys :: XConfig l -> M.Map (KeyMask, KeySym) (X ())
 myAdditionalKeys conf = let modm = modMask conf in M.fromList $
