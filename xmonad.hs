@@ -94,6 +94,8 @@ myKeys =
         ("M-w", kill1),
         ("M-S-q", kill1),
         ("M-C-w", killAll),
+        -- Layout management
+        ("M-<Tab>", sendMessage NextLayout),
         -- Workspace management
         ("M-C-,", sendMessage Shrink),
         ("M-C-.", sendMessage Expand),
@@ -116,8 +118,8 @@ myKeys =
         ("M-S-k", sendMessage $ Swap U),
         ("M-S-l", sendMessage $ Swap R),
         -- Traditional stack-based navigation (as fallback)
-        ("M-<Tab>", windows W.focusDown),
-        ("M-S-<Tab>", windows W.focusUp),
+        ("M-n", windows W.focusDown),
+        ("M-p", windows W.focusUp),
         ("M-m", windows W.focusMaster),
         ("M-S-m", windows W.swapMaster),
         -- BinarySpacePartition controls
