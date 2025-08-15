@@ -9,7 +9,7 @@ import System.Exit ( exitSuccess )
 -- Actions
 import XMonad.Actions.CopyWindow (kill1)
 import XMonad.Actions.CycleWS
-    ( nextScreen, prevScreen, shiftNextScreen, shiftPrevScreen )
+    ( nextScreen, prevScreen, shiftNextScreen, shiftPrevScreen, nextWS, prevWS )
 import XMonad.Actions.DynamicWorkspaces (withNthWorkspace)
 import XMonad.Actions.WithAll (killAll)
 
@@ -176,8 +176,11 @@ myKeys =
         ("M-S-q", kill1),
         ("M-C-w", killAll),
         -- Layout management
-        ("M-<Tab>", sendMessage NextLayout),
-        -- Workspace management
+        ("M-[", sendMessage NextLayout),
+        ("M-]", sendMessage NextLayout),  -- Both cycle forward for now
+        -- Workspace navigation
+        ("M-<Tab>", nextWS),
+        ("M-S-<Tab>", prevWS),
         ("M-C-,", sendMessage Shrink),
         ("M-C-.", sendMessage Expand),
         ("M-C-S-,", sendMessage (IncMasterN (-1))),
@@ -205,12 +208,13 @@ myKeys =
         ("M-r", layoutAction [] "r"),
         -- Applications
         ("M-b", spawn myBrowser)
-    ]
-myAdditionalKeys :: XConfig l -> M.Map (KeyMask, KeySym) (X ())
-myAdditionalKeys conf = let modm = modMask conf in M.fromList $
-    [((m .|. modm, k), windows $ onCurrentScreen f i)
-        | (i, k) <- zip (workspaces' conf) [xK_1 .. ]
-        , (f, m) <- [(W.greedyView, 0), (W.shift, shiftMask)]]
+    ] ++
+    -- Workspace switching (with IndependentScreens)
+    [ ("M-" ++ show k, windows $ onCurrentScreen W.greedyView i)
+        | (i, k) <- zip myWorkspaces [1..] ] ++
+    -- Move window to workspace
+    [ ("M-S-" ++ show k, windows $ onCurrentScreen W.shift i)
+        | (i, k) <- zip myWorkspaces [1..] ]
 
 -----------------------------------------------------------
 -- Layout 
@@ -275,7 +279,6 @@ main = do
           borderWidth = myBorderWidth,
           focusedBorderColor = myFocusedBorderColor,
           normalBorderColor = myNormalBorderColor,
-          keys = myAdditionalKeys,
           layoutHook = myLayoutHook
         } `additionalKeysP` myKeys
 
