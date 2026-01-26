@@ -38,6 +38,7 @@ import XMonad.Layout.Renamed (renamed, Rename(Replace))
 
 -- Data
 import Data.Monoid ()
+import Data.Maybe(fromMaybe)
 import qualified Data.Map as M
 
 -----------------------------------------------------------
@@ -98,7 +99,7 @@ layoutAction actions key = do
             "Monocle" -> lookup key monocleActions
             "Fullscreen" -> lookup key fullscreenActions
             _ -> Nothing
-    maybe (return ()) id action
+    fromMaybe (return ()) action
 
 -----------------------------------------------------------
 -- Keybindings
