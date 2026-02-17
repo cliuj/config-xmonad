@@ -210,7 +210,7 @@ myKeys =
   ]
     ++
     -- Workspace switching (with IndependentScreens)
-    [ ("M-" ++ show k, windows $ onCurrentScreen W.greedyView i)
+    [ ("M-" ++ show k, windows $ onCurrentScreen W.view i)
       | (i, k) <- zip myWorkspaces [1 ..]
     ]
     ++
