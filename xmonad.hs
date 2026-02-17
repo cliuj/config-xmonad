@@ -6,7 +6,10 @@ import System.Exit (exitSuccess)
 import XMonad
 import XMonad.Actions.CopyWindow (kill1)
 import XMonad.Actions.CycleWS
-  ( nextScreen,
+  ( Direction1D (Next, Prev),
+    WSType (WSIs),
+    moveTo,
+    nextScreen,
     nextWS,
     prevScreen,
     prevWS,
@@ -80,6 +83,22 @@ myWorkspaces = ["term", "code", "browser", "comm"]
 -- ensuring screen K starts on "K_term" rather than "0_<something>".
 withScreensInterleaved :: ScreenId -> [String] -> [String]
 withScreensInterleaved n wss = [marshall s w | w <- wss, s <- [0 .. n - 1]]
+
+-- Screen-aware workspace cycling
+-- Only cycle through workspaces belonging to the current screen
+nextWSOnScreen :: X ()
+nextWSOnScreen = moveTo Next (WSIs onCurrentScreenPredicate)
+
+prevWSOnScreen :: X ()
+prevWSOnScreen = moveTo Prev (WSIs onCurrentScreenPredicate)
+
+-- Predicate that returns True for workspaces on the current screen
+onCurrentScreenPredicate :: X (WindowSpace -> Bool)
+onCurrentScreenPredicate = do
+  ws <- gets windowset
+  let screen = W.screen $ W.current ws
+      screenWsTags = [marshall screen w | w <- myWorkspaces]
+  return (\w -> W.tag w `elem` screenWsTags)
 
 -----------------------------------------------------------
 -- Layout-specific actions
@@ -182,9 +201,9 @@ myKeys =
     -- Layout management
     ("M-[", sendMessage NextLayout),
     ("M-]", sendMessage NextLayout), -- Both cycle forward for now
-    -- Workspace navigation
-    ("M-<Tab>", nextWS),
-    ("M-S-<Tab>", prevWS),
+    -- Workspace navigation (screen-aware)
+    ("M-<Tab>", nextWSOnScreen),
+    ("M-S-<Tab>", prevWSOnScreen),
     ("M-C-,", sendMessage Shrink),
     ("M-C-.", sendMessage Expand),
     ("M-C-S-,", sendMessage (IncMasterN (-1))),
