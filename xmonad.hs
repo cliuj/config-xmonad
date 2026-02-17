@@ -1,8 +1,8 @@
 import qualified Data.Map as M
+import Data.List (elemIndex)
 import Data.Maybe (fromMaybe)
 import Data.Monoid ()
 import System.Exit (exitSuccess)
-import System.IO (hPutStrLn)
 import XMonad
 import XMonad.Actions.CopyWindow (kill1)
 import XMonad.Actions.CycleWS
@@ -15,7 +15,6 @@ import XMonad.Actions.CycleWS
   )
 import XMonad.Actions.DynamicWorkspaces (withNthWorkspace)
 import XMonad.Actions.WithAll (killAll)
-import XMonad.Hooks.DynamicLog (PP (..), dynamicLogWithPP, wrap, xmobarColor, xmobarPP)
 import XMonad.Hooks.EwmhDesktops (ewmh)
 import XMonad.Hooks.ManageDocks
   ( AvoidStruts,
@@ -23,9 +22,11 @@ import XMonad.Hooks.ManageDocks
     avoidStruts,
     docks,
   )
+import XMonad.Hooks.StatusBar (StatusBarConfig, statusBarPropTo, withSB)
+import XMonad.Hooks.StatusBar.PP (PP (..), def)
 import XMonad.Layout.BinarySpacePartition (ResizeDirectional (..), Rotate (Rotate), emptyBSP)
 import qualified XMonad.Layout.BinarySpacePartition as BSP
-import XMonad.Layout.IndependentScreens (countScreens, marshall, onCurrentScreen, withScreens, workspaces')
+import XMonad.Layout.IndependentScreens (countScreens, marshall, marshallPP, marshallSort, onCurrentScreen, withScreens, workspaces')
 import XMonad.Layout.LayoutModifier (ModifiedLayout)
 import XMonad.Layout.Renamed (Rename (Replace), renamed)
 import XMonad.Layout.Spacing
@@ -36,7 +37,6 @@ import XMonad.Layout.Spacing
 import XMonad.Layout.WindowNavigation (Navigate (..), windowNavigation)
 import qualified XMonad.StackSet as W
 import XMonad.Util.EZConfig (additionalKeysP)
-import XMonad.Util.Run (spawnPipe)
 import XMonad.Util.Types (Direction2D (D, L, R, U))
 
 -----------------------------------------------------------
@@ -280,22 +280,64 @@ myLayoutHook =
     ||| fullscreenLayout
 
 -----------------------------------------------------------
+-- StatusBar
+-----------------------------------------------------------
+
+-- Build a PP that outputs: "state:name:index|..." for each workspace, then "|||layout"
+mkPP :: ScreenId -> ScreenId -> [String] -> PP
+mkPP screenId nScreens baseWs =
+  let allWs = withScreensInterleaved nScreens baseWs
+      wsIdx ws = fromMaybe 0 $ elemIndex (marshall screenId ws) allWs
+      fmt state ws = state ++ ":" ++ ws ++ ":" ++ show (wsIdx ws)
+      basePP =
+        def
+          { ppCurrent = fmt "current",
+            ppVisible = fmt "visible",
+            ppHidden = fmt "hidden",
+            ppHiddenNoWindows = fmt "empty",
+            ppUrgent = fmt "urgent",
+            ppWsSep = "|",
+            ppSep = "|||",
+            ppLayout = id,
+            ppTitle = const "",
+            ppOrder = \(ws : layout : _) -> [ws, layout]
+          }
+   in (marshallPP screenId basePP)
+        { ppSort = fmap (marshallSort screenId) (ppSort basePP)
+        }
+
+myStatusBar :: ScreenId -> ScreenId -> [String] -> StatusBarConfig
+myStatusBar screenId nScreens baseWs =
+  statusBarPropTo propName spawnCmd (pure $ mkPP screenId nScreens baseWs)
+  where
+    propName = "_XMONAD_LOG_" ++ show (fromEnum screenId)
+    barName = "top-bar-" ++ show (fromEnum screenId)
+    spawnCmd = "eww open " ++ barName
+
+-----------------------------------------------------------
 -- Main
 -----------------------------------------------------------
 main :: IO ()
 main = do
   screensCount <- countScreens
+  let allWs = withScreensInterleaved screensCount myWorkspaces
+      sbs =
+        mconcat
+          [ myStatusBar (S s) screensCount myWorkspaces
+            | s <- [0 .. fromEnum screensCount - 1]
+          ]
   xmonad $
     ewmh $
-      docks
-        def
-          { terminal = myTerminal,
-            focusFollowsMouse = myFocusFollowsMouse,
-            modMask = myModMask,
-            workspaces = withScreensInterleaved screensCount myWorkspaces,
-            borderWidth = myBorderWidth,
-            focusedBorderColor = myFocusedBorderColor,
-            normalBorderColor = myNormalBorderColor,
-            layoutHook = myLayoutHook
-          }
-        `additionalKeysP` myKeys
+      docks $
+        withSB sbs $
+          def
+            { terminal = myTerminal,
+              focusFollowsMouse = myFocusFollowsMouse,
+              modMask = myModMask,
+              workspaces = allWs,
+              borderWidth = myBorderWidth,
+              focusedBorderColor = myFocusedBorderColor,
+              normalBorderColor = myNormalBorderColor,
+              layoutHook = myLayoutHook
+            }
+            `additionalKeysP` myKeys
