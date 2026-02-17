@@ -25,7 +25,7 @@ import XMonad.Hooks.ManageDocks
   )
 import XMonad.Layout.BinarySpacePartition (ResizeDirectional (..), Rotate (Rotate), emptyBSP)
 import qualified XMonad.Layout.BinarySpacePartition as BSP
-import XMonad.Layout.IndependentScreens (countScreens, onCurrentScreen, withScreens, workspaces')
+import XMonad.Layout.IndependentScreens (countScreens, marshall, onCurrentScreen, withScreens, workspaces')
 import XMonad.Layout.LayoutModifier (ModifiedLayout)
 import XMonad.Layout.Renamed (Rename (Replace), renamed)
 import XMonad.Layout.Spacing
@@ -75,6 +75,11 @@ myLockScreenCmd = "betterlockscreen -l"
 
 myWorkspaces :: [String]
 myWorkspaces = ["term", "code", "browser", "comm"]
+
+-- Interleave workspaces so each screen's Nth workspace is adjacent,
+-- ensuring screen K starts on "K_term" rather than "0_<something>".
+withScreensInterleaved :: ScreenId -> [String] -> [String]
+withScreensInterleaved n wss = [marshall s w | w <- wss, s <- [0 .. n - 1]]
 
 -----------------------------------------------------------
 -- Layout-specific actions
@@ -287,7 +292,7 @@ main = do
           { terminal = myTerminal,
             focusFollowsMouse = myFocusFollowsMouse,
             modMask = myModMask,
-            workspaces = withScreens screensCount myWorkspaces,
+            workspaces = withScreensInterleaved screensCount myWorkspaces,
             borderWidth = myBorderWidth,
             focusedBorderColor = myFocusedBorderColor,
             normalBorderColor = myNormalBorderColor,
