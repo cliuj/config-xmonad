@@ -49,7 +49,7 @@ myFocusFollowsMouse :: Bool
 myFocusFollowsMouse = True
 
 myTerminal :: String
-myTerminal = "alacritty"
+myTerminal = "kitty"
 
 myEditor :: String
 myEditor = myTerminal ++ " -e nvim"
