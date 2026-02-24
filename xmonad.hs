@@ -1,5 +1,5 @@
-import qualified Data.Map as M
 import Data.List (elemIndex)
+import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import Data.Monoid ()
 import System.Exit (exitSuccess)
@@ -302,6 +302,16 @@ myLayoutHook =
 -- StatusBar
 -----------------------------------------------------------
 
+-- Get the layout description for a specific screen (not just the focused one)
+screenLayout :: ScreenId -> X (Maybe String)
+screenLayout sid = do
+  ws <- gets windowset
+  let allScreens = W.current ws : W.visible ws
+      target = [s | s <- allScreens, W.screen s == sid]
+  return $ case target of
+    (s : _) -> Just $ description $ W.layout $ W.workspace s
+    [] -> Nothing
+
 -- Build a PP that outputs: "state:name:index|..." for each workspace, then "|||layout"
 mkPP :: ScreenId -> ScreenId -> [String] -> PP
 mkPP screenId nScreens baseWs =
@@ -317,9 +327,13 @@ mkPP screenId nScreens baseWs =
             ppUrgent = fmt "urgent",
             ppWsSep = "|",
             ppSep = "|||",
-            ppLayout = id,
+            ppLayout = const "",
             ppTitle = const "",
-            ppOrder = \(ws : layout : _) -> [ws, layout]
+            ppExtras = [screenLayout screenId],
+            ppOrder = \xs -> case xs of
+              (ws : _ : _ : layout : _) -> [ws, layout]
+              (ws : _ : _) -> [ws, "BSP"]
+              _ -> xs
           }
    in (marshallPP screenId basePP)
         { ppSort = fmap (marshallSort screenId) (ppSort basePP)
