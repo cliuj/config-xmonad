@@ -19,6 +19,8 @@ import XMonad.Actions.CycleWS
 import XMonad.Actions.DynamicWorkspaces (withNthWorkspace)
 import XMonad.Actions.WithAll (killAll)
 import XMonad.Hooks.EwmhDesktops (ewmh)
+import XMonad.Hooks.ManageHelpers (doRectFloat)
+import XMonad.Hooks.ServerMode (serverModeEventHookCmd')
 import XMonad.Hooks.ManageDocks
   ( AvoidStruts,
     ToggleStruts (ToggleStruts),
@@ -371,6 +373,15 @@ main = do
               borderWidth = myBorderWidth,
               focusedBorderColor = myFocusedBorderColor,
               normalBorderColor = myNormalBorderColor,
-              layoutHook = myLayoutHook
+              layoutHook = myLayoutHook,
+              manageHook = composeAll
+                [ title =? "System Monitor" --> doRectFloat (W.RationalRect 0.2 0.2 0.6 0.6)
+                ],
+              handleEventHook = serverModeEventHookCmd' myServerCommands
             }
             `additionalKeysP` myKeys
+
+myServerCommands :: X [(String, X ())]
+myServerCommands = return
+  [ ("next-layout", sendMessage NextLayout)
+  ]
