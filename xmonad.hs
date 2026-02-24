@@ -375,7 +375,8 @@ main = do
               normalBorderColor = myNormalBorderColor,
               layoutHook = myLayoutHook,
               manageHook = composeAll
-                [ title =? "System Monitor" --> doRectFloat (W.RationalRect 0.2 0.2 0.6 0.6)
+                [ title =? "System Monitor" --> doRectFloat (W.RationalRect 0.2 0.2 0.6 0.6),
+                  className =? "Nm-connection-editor" --> doRectFloat (W.RationalRect 0.2 0.2 0.6 0.6)
                 ],
               handleEventHook = serverModeEventHookCmd' myServerCommands
             }
