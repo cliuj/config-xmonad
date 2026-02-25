@@ -19,14 +19,14 @@ import XMonad.Actions.CycleWS
 import XMonad.Actions.DynamicWorkspaces (withNthWorkspace)
 import XMonad.Actions.WithAll (killAll)
 import XMonad.Hooks.EwmhDesktops (ewmh)
-import XMonad.Hooks.ManageHelpers (doRectFloat)
-import XMonad.Hooks.ServerMode (serverModeEventHookCmd')
 import XMonad.Hooks.ManageDocks
   ( AvoidStruts,
     ToggleStruts (ToggleStruts),
     avoidStruts,
     docks,
   )
+import XMonad.Hooks.ManageHelpers (doFloatAt, doRectFloat)
+import XMonad.Hooks.ServerMode (serverModeEventHookCmd')
 import XMonad.Hooks.StatusBar (StatusBarConfig, statusBarPropTo, withSB)
 import XMonad.Hooks.StatusBar.PP (PP (..), def)
 import XMonad.Layout.BinarySpacePartition (ResizeDirectional (..), Rotate (Rotate), emptyBSP)
@@ -374,16 +374,18 @@ main = do
               focusedBorderColor = myFocusedBorderColor,
               normalBorderColor = myNormalBorderColor,
               layoutHook = myLayoutHook,
-              manageHook = composeAll
-                [ title =? "System Monitor" --> doRectFloat (W.RationalRect 0.2 0.2 0.6 0.6),
-                  className =? "Nm-connection-editor" --> doRectFloat (W.RationalRect 0.2 0.2 0.6 0.6),
-                  className =? "Mullvad VPN" --> doRectFloat (W.RationalRect 0.2 0.2 0.6 0.6)
-                ],
+              manageHook =
+                composeAll
+                  [ title =? "System Monitor" --> doRectFloat (W.RationalRect 0.2 0.2 0.6 0.6),
+                    className =? "Nm-connection-editor" --> doRectFloat (W.RationalRect 0.2 0.2 0.6 0.6),
+                    className =? "Mullvad VPN" --> doFloatAt 0.65 0.05
+                  ],
               handleEventHook = serverModeEventHookCmd' myServerCommands
             }
             `additionalKeysP` myKeys
 
 myServerCommands :: X [(String, X ())]
-myServerCommands = return
-  [ ("next-layout", sendMessage NextLayout)
-  ]
+myServerCommands =
+  return
+    [ ("next-layout", sendMessage NextLayout)
+    ]
